@@ -12,6 +12,6 @@ do
     eval "cp ./Seed${i}/*PoolSize0* ./Noise/Seed${i}/" #Move pool 0 of this seed into the Noise/Seed folder
    
     eval "cp -r ./Seed${i} ./Signal/" #move the seed folder w/o pool0 into the signal folder
-    eval "rm ./Signal/Seed${i}/*PoolSize0*"
+    eval "rm ./Signal/Seed${i}/*PoolSize0*" #remove pool0 from the seed folder if it hasn't been done so already.
 done
 
