@@ -1,3 +1,3 @@
 # mworks
 
-This is a collection of code that I wrote for either the creation of MWorks tasks/protocols, or shell scripts to organize files for these MWorks tasks. 
+Code for MWorks experiments, behavioral data analysis and file organization.
