@@ -1,0 +1,1217 @@
+//  THIS VERSION HAS ALL 500 NATURAL IMAGE BACKGROUNDS
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0.5,0.5,0.5)
+itc18 'Setup3 ITC18' {
+    iochannel Eye_H_channel (
+        capability = ITC18_ADC_INPUT4
+        data_interval = 1ms
+        data_type = analog
+        direction = input
+        range_max = 10
+        range_min = -10
+        resolution = 16
+        synchrony = hardware_timed_synchronous
+        update_interval = 3ms
+        variable = eye_h_raw
+        )
+    iochannel Eye_V_channel (
+        capability = ITC18_ADC_INPUT6
+        data_interval = 1ms
+        data_type = analog
+        direction = input
+        range_max = 10
+        range_min = -10
+        resolution = 16
+        synchrony = hardware_timed_synchronous
+        update_interval = 3ms
+        variable = eye_v_raw
+        )
+    iochannel Reward_channel (
+        capability = ITC18_TTL_ASYCH_OUT00
+        data_interval = 1ms
+        data_type = pulse_active_high
+        direction = output
+        range_max = 0
+        range_min = 0
+        resolution = 1
+        synchrony = asynchronous
+        update_interval = 3ms
+        variable = reward
+        )
+    iochannel wordOut (
+        capability = ITC18_TTL_AUX_WORD1
+        data_interval = 1ms
+        data_type = digital_uint8
+        direction = output
+        range_max = 0
+        range_min = 0
+        resolution = 1
+        synchrony = asynchronous
+        update_interval = 3ms
+        variable = wordout_var
+        )
+
+    iochannel lpback_chan (
+        capability = ITC18_TTL_ASYCH_OUT02
+        data_interval = 1ms
+        data_type = digital
+        direction = output
+        range_max = 0
+        range_min = 0
+        resolution = 1
+        synchrony = asynchronous
+        update_interval = 3ms
+        variable = lpback
+        )
+
+}
+
+// fake_monkey fake_monkey {
+//     eye_movement eyes (
+//         eye_v = eye_v
+//         eye_h = eye_h
+//         data_interval = 1ms
+//         update_interval = 5ms
+//         )
+// }
+
+
+//
+// Calibrators
+//
+
+standard_eye_calibrator eyeCalibrator (
+    eyeh_calibrated = eye_h_calibrated
+    eyeh_raw = eye_h_raw
+    eyev_calibrated = eye_v_calibrated
+    eyev_raw = eye_v_raw
+    )
+
+//
+// Variables
+//
+
+group 'Altered Variables' {
+    var bg_index = 1 (persistent = NO)
+    var oddity_category_index = 1 (persistent = NO)
+    var distractor_category_index = 1 (persistent = NO)
+
+    var oddity_index = 1
+    var distractor_index1 = 1
+    var distractor_index2 = 1
+    var distractor_index3 = 1
+
+    //var COH_stim_index = 1 (persistent = NO)
+    //var COH_low = 0 (persistent = NO)
+    //var COH_high = 9 (persistent = NO)
+    var center_window_size = (float)(2)
+    var fixation_duration = 400 (persistent = NO)
+    var trials = 0 (
+        persistent = NO
+        scope = local
+        )
+    var reward_duration = 65000 (persistent = NO)
+    var rotation = (float)(0)
+    
+    
+    var target_window_width = (float)(5)
+    var fixation_point_size = (float)(.5) (persistent = NO)
+    var fixation_width_calibration = (float)(5) (persistent = NO)
+    var acquisition_window_size = (float)(4) (persistent = NO)
+    var fix_pos_x = (float)(0) (persistent = NO)
+    var fix_pos_y = (float)(0) (persistent = NO)
+    var stm_size = 3.5 (persistent = NO)
+    var eccentricity = 3.5
+    var stim_contrast = (float)(0)
+    var stim_position_x = (float)(0)
+    var stim_position_y = (float)(0)
+    
+
+    var samples_per_category = 27 (persistent = NO)
+    var stimoff_time = 50 (persistent = NO)
+    var stimon_time = 100 (persistent = NO)
+    var stimon_delay = (float)(400) (persistent = NO)
+    var pause_time = 500 (persistent = NO)
+    var ignore_time = (float)(1200) (persistent = NO)
+    var pre_reward_time = (float)(100) (persistent = NO)
+    
+
+    var target_region_size = (float)(10)
+    var in_target_region = 0
+    var image_angle = 0
+}
+
+group 'Task timing' {
+    var time2acqscreen = (float) 1000
+    var time2acqfixation = (float) 500
+    var feedback_duration    = (float) 250
+    var time4decision        = (float) 1200
+    var time2hold            = (float) 400
+}
+
+group 'Contrast variables' {
+    var contrast_oddity = (float)(1)
+    var contrast_background = (float)(0)
+    var contrast_distractor = (float)(1)
+}
+
+group 'Background variables' {
+    var eye_in_choice1 = 0
+    var eye_in_choice2 = 0
+    var eye_in_choice3 = 0
+    var eye_in_choice4 = 0
+    var eye_in_target = 0
+    
+    var search_task = true // is this a search task, so you have chances to look around or is this a true 4afc. 
+
+    var choice_locations = [0,0,0,0,0,0,0,0,0,0,0] // preallocated set of locations the animal may look.
+    var choice_index = 0
+    var tmp_for_calc = 1
+
+    var reward = 0 (persistent = NO) {
+        play_sound (correct_sound)
+    }
+    //var image_category_repetition = (int)(-1) (persistent = NO)
+
+    var io_active = -1 (persistent = NO)
+    var trial_count = 0 (persistent = NO)
+  
+    // These determine the information being fed to the behavior window. Never use them for anything else
+    var failure = 0 (persistent = NO)
+    var success = 0 (persistent = NO)
+    var ignore = 0 (persistent = NO)
+    var abort =  0 (persistent = NO)
+
+    var wordout_var = 0 (persistent = NO)
+    var lpback = 0 (persistent = NO)
+    var dstrobe = 0 (persistent = NO)
+
+    var trial_bounds = [-1, -1]
+    
+    var fp_visible = 0
+    var target_angle = 0
+    var distractor_angle = 0
+
+    var tmp_position = 0
+
+    var stim_catNumber = 10 (persistent = YES)
+    var stim_samples_per_cat = 9 (persistent = YES)
+
+    selection image_category_index (
+        values = 0:(stim_catNumber-1) 
+        selection = random_without_replacement
+        n_samples = 2 // you draw two, and then reset the selection
+        autoreset = YES
+        )
+
+    selection location_index (
+        values = 45,135,225,315 // potential locations
+        selection = random_without_replacement
+        n_samples = 4 // you draw two, and then reset the selection
+        autoreset = YES
+        )
+
+    selection background_index (
+        values = 0:4251 // should be maximally the number of backgrounds. There are 4252 images in the file.
+        selection = random_without_replacement
+        n_samples = 1        
+        autoreset = YES
+    )
+
+    selection distractor_exemplar_indices (
+        values = 0:(stim_samples_per_cat-1)
+        selection = random_without_replacement
+        n_samples = 3
+        autoreset = YES
+    )
+
+    selection saccade_index (
+        values = 0:10
+        selection = sequential_ascending
+        n_samples = 11
+        autoreset = YES
+    )
+}
+
+group 'Calibrator variables' {
+    var cal_target_x = 0
+    var cal_target_y = 0
+    var eye_rx = 0
+    var eye_ry = 0
+
+    var hit_count = 0
+    var stm_selector_y = 0 (
+        logging = never
+        persistent = 0
+        scope = local
+        )
+    
+    var stm_selector_x = 0 (
+        logging = never
+        persistent = NO
+        scope = local
+        )
+    //var flicker = 0
+    //var flicker_time = 125
+    var fixation_point_size_cal = .5
+    var fixation_pos_x = (float)(0) (persistent = NO)
+    var fixation_pos_y = (float)(0) (persistent = NO)
+    var saccade = 0 (persistent = NO)
+    var eye_v = (float)(0) (persistent = NO)
+    var eye_h = (float)(0) (persistent = NO)
+    var eye_in_window = 0 (persistent = NO)
+
+    var eye_v_calibrated = (float)(0) (
+        logging = never
+        persistent = NO
+        )
+    var eye_h_calibrated = (float)(0) (
+        logging = never
+        persistent = NO
+        )
+    var eye_v_raw = (float)(0) (
+        logging = never
+        persistent = NO
+        )
+    var eye_h_raw = (float)(0) (
+        logging = never
+        persistent = NO
+        )
+    var currentEyePosition_0 = (float)(0)
+    var currentEyePosition_1 = (float)(0)
+    var eye_good = (bool)(0)
+
+    var fixation_r = 0
+    var fixation_g = 0
+    var fixation_b = 0
+
+    selection calibration_step_size (
+        values = -4 : 4 :2 
+        selection = random_without_replacement
+        n_samples = 2        
+        autoreset = YES
+    )
+}    
+
+//
+// Sounds
+//
+
+wav_file correct_sound ('/v/scratch/jezibaba_archive/sounds/NRsuccess.wav')
+wav_file error_sound ('/v/scratch/jezibaba_archive/sounds/NRbaad.wav')
+wav_file calibration_end_sound ('/v/scratch/jezibaba_archive/sounds/complete.wav')
+
+//
+// Stimuli
+//
+stimulus_group image_categories {
+    stimulus_group Img1 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img1/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img2 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img2/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img3 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img3/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img4 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img4/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img5 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img5/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img6 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img6/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img7 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img7/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img8 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img8/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img9 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img9/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    stimulus_group Img10 {
+        list_replicator (
+            values = 'filenames(/Users/stimulus/mworks/tasks/shape_4afc/05082024/img10/*.png)'
+            variable = filename
+            ) {
+            image_file ${filename} (
+                alpha_multiplier = stim_contrast
+                deferred = NO
+                path = ${filename}
+                x_position = stim_position_x
+                x_size = stm_size
+                y_position = stim_position_y
+                y_size = stm_size
+                )
+        }
+    }
+    
+}
+image_file circular_mask (
+    alpha_multiplier = 0
+    deferred = NO
+    path = '/v/scratch/jezibaba_archive/images/diskfade_150x150.png'
+    x_position = stim_position_x
+    x_size = stm_size
+    y_position = stim_position_y
+    y_size = stm_size
+    )
+
+stimulus_group natural_bg {
+    list_replicator (
+        values = 'filenames(/Users/stimulus/mworks/tasks/obj_4afc/backgrounds_gs_200x200_natural_c+04x4/*.png)'
+        variable = filename
+        ) {
+        image_file ${filename} (
+            alpha_multiplier = contrast_background
+            deferred = NO
+            path = ${filename}
+            x_size = 12.8
+            y_size = 12.8
+            )
+    }
+}
+blank_screen background (color = 0.5, 0.5, 0.5)
+
+rectangle fixation_feedback_cue (
+    color = 0.8, 0.4, 0.4
+    x_size = center_window_size
+    y_size = center_window_size
+    )
+
+fixation_point calibration_fixation_point (
+    color = fixation_r,fixation_g,fixation_b
+    trigger_flag = eye_in_window
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_width = fixation_width_calibration
+    x_position = fixation_pos_x
+    x_size = fixation_point_size
+    y_position = fixation_pos_y
+    y_size = fixation_point_size
+    )
+    
+circular_fixation_point 'target_window' (
+    color = 0,0,0
+    trigger_flag = eye_in_target
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_width = target_window_width
+    x_position = fixation_pos_x
+    x_size = fixation_point_size
+    y_position = fixation_pos_y
+    y_size = fixation_point_size
+    alpha_multiplier = fp_visible //optionally invisible
+
+    )
+
+circular_fixation_point 'upper_right_window' (
+    color = 0,0,1
+    trigger_flag = eye_in_choice1
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_width =  acquisition_window_size
+    x_position = eccentricity*cos(45/180 * pi())
+    y_position = eccentricity*sin(45/180 * pi())
+    x_size = 1
+    y_size = 1
+    alpha_multiplier = 0 //optionally invisible
+
+    )
+
+circular_fixation_point 'lower_right_window' (
+    color = 0,0,1
+    trigger_flag = eye_in_choice2
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_width =  acquisition_window_size
+    x_position = eccentricity*cos(315/180 * pi())
+    y_position = eccentricity*sin(315/180 * pi())
+    x_size = 1
+    y_size = 1
+    alpha_multiplier = 0 //optionally invisible
+
+    )
+
+circular_fixation_point 'lower_left_window' (
+    color = 0,0,1
+    trigger_flag = eye_in_choice3
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_width =  acquisition_window_size
+    x_position = eccentricity*cos(225/180 * pi())
+    y_position = eccentricity*sin(225/180 * pi())
+    x_size = 1
+    y_size = 1
+    alpha_multiplier = 0 //optionally invisible
+
+    )
+
+circular_fixation_point 'upper_left_window' (
+    color = 0,0,1
+    trigger_flag = eye_in_choice4
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_width =  acquisition_window_size
+    x_position = eccentricity*cos(135/180 * pi())
+    y_position = eccentricity*sin(135/180 * pi())
+    x_size = 1
+    y_size = 1
+    alpha_multiplier = 0 //optionally invisible
+
+    )
+
+
+fixation_point 'screen_region' (
+    trigger_width = target_region_size
+    trigger_watch_x = eye_h
+    trigger_watch_y = eye_v
+    trigger_flag = in_target_region
+    x_size = target_region_size
+    y_size = target_region_size
+    x_position = 0
+    y_position = 0
+    rotation = 0
+    alpha_multiplier = 0 //needs to be invisible. 
+    )
+//
+// Filters
+//
+
+boxcar_filter_1d eye_v_filter (
+    in1 = eye_v_calibrated
+    out1 = eye_v
+    width_samples = 5
+    )
+boxcar_filter_1d eye_h_filter (
+    in1 = eye_h_calibrated
+    out1 = eye_h
+    width_samples = 5
+    )
+basic_eye_monitor 'saccade detector' (
+    eye_state = saccade
+    eyeh_calibrated = eye_h
+    eyev_calibrated = eye_v
+    saccade_entry_speed = 50
+    saccade_exit_speed = 25
+    width_samples = 5
+    )
+
+//
+// Optimizers
+//
+
+
+//
+// Protocols
+//
+protocol 'Fixation Calibration No Flashing'{
+    //sets up io device and primes our variables
+    start_device_io ('Setup3 ITC18') // eventually should be put back because this is real monkey data.
+    // start_device_io (eyelink)
+    report('STARTING CALIBRATION')
+    clear_calibration(eyeCalibrator)
+    fixation_point_size = fixation_point_size_cal
+    queue_stimulus(background)
+    update_stimulus_display()
+
+    block calibrator_block {
+        failure = 0 
+        success = 0
+        ignore = 0
+        trial 'Trial N' (nsamples = 50){ //ask manu
+            reset_selection (calibration_step_size)
+
+            task 'Calibration Task'{
+                state 'Target selection'{
+                    //select values for x and y locations
+                    
+                    stm_selector_x = calibration_step_size
+                    accept_selections (calibration_step_size)
+                    next_selection(calibration_step_size)
+                    stm_selector_y = (calibration_step_size)
+                    fixation_pos_x = stm_selector_x
+                    fixation_pos_y = stm_selector_y
+                    //pause timer before the calibrator starts
+                    start_timer(
+                        duration = 600ms
+                        timer = pause_timer
+                    )
+                    fixation_g = 0
+                    fixation_b = 0
+                    fixation_r = 1
+                    start_timer(
+                        duration = 500ms
+                        timer = cal_pre_timer
+                    )
+                    goto (
+                        target = 'cal prefixation'
+                        when = timer_expired(pause_timer)
+                    )
+                
+                  
+                }
+                state 'cal prefixation'{
+                    //start prefixation timer of 30s
+                    start_timer(
+                        duration = 30000
+                        duration_units = ms 
+                        timer = cal_pre_timer
+                    )
+                    //bring up the stimulus
+                    queue_stimulus(calibration_fixation_point)
+                    update_stimulus_display()
+
+                    goto(
+                        //when the timer is up and monkey hasn't looked in the window
+                        target = 'Ignore' 
+                        when = timer_expired(cal_pre_timer)
+                    )
+              
+                    goto(
+                        //when eye is in window
+                        target = 'Acquired'
+                        when = eye_in_window == 1
+                    )
+                }
+
+                state 'Ignore'{
+                    report('IGNORE')
+                    play_sound(error_sound)
+                    dequeue_stimulus(calibration_fixation_point)
+                    update_stimulus_display()
+                    reject_selections(calibration_step_size)
+                    ignore = ignore +1
+                    goto(
+                        target = 'Punish'
+                        when = ignore == 7
+                    )
+                    yield()
+                }
+                state 'Acquired'{
+                    //start the fixation duration timer
+                    start_timer(
+                        duration = fixation_duration
+                        duration_units = ms
+                        timer = fixation_timer
+                    )
+                    fixation_point_size = fixation_point_size_cal
+                    fixation_g = 0
+                    fixation_b = 0
+                    fixation_r = 0
+                    queue_stimulus(calibration_fixation_point)
+                    update_stimulus_display()
+                    goto('Fixating')
+                }
+                state 'Fixating' {
+                    //if hold long enough- success, else- failure
+                    begin_calibration_average(eyeCalibrator)
+                    goto(
+                        target = 'Failure'
+                        when = eye_in_window == 0
+                    )
+                    goto (
+                        target = 'Success'
+                        when = timer_expired(fixation_timer)
+                    )
+                    
+                }
+                state 'Failure'{
+                    end_calibration_average_and_ignore (eyeCalibrator)
+                    report('FAILED')
+                    play_sound(error_sound)
+                    ignore = ignore +1
+                    wait(
+                        duration = 500
+                        duration_units = ms
+                    )
+                    dequeue_stimulus(calibration_fixation_point)
+                    update_stimulus_display()
+                    reject_selections(calibration_step_size)
+                    
+                    goto(
+                        target = 'Punish'
+                        when = ignore == 7
+                    )
+
+                    goto (
+                        target = 'End trial'
+                    )
+                    
+                }
+                state 'Punish'{
+                    report('PUNISH')
+                    ignore = 0
+                    wait(
+                        duration = 1
+                        duration_units = s
+                    )
+                    goto ('End trial')
+                    
+                }
+                state 'Success'{
+                    report('SUCCESS')
+                    play_sound(correct_sound)
+                    end_calibration_average_and_take_sample(
+                        calibratable_object = calibration_fixation_point
+                        calibrator = eyeCalibrator
+                    )
+                    dequeue_stimulus(calibration_fixation_point)
+                    update_stimulus_display()
+                    reward = reward_duration
+                    accept_selections (calibration_step_size)
+                    goto ('End trial')
+                }
+                state 'End trial' {
+                    report('Completed a trial')
+                    yield()
+                }
+            
+            }
+            
+          
+
+            
+        }
+          
+        report ('FINISHED CALIBRATING')
+        play_sound (calibration_end_sound)
+        update_calibration (eyeCalibrator)
+        stop_device_io ('Setup3 ITC18')
+        dequeue_stimulus (background)
+        update_stimulus_display ()
+        
+    }
+}
+
+protocol '4AFC object search on natural background' {
+    block io_open {
+       start_device_io ('Setup3 ITC18')
+        // start_device_io (fake_monkey)
+
+        io_active = 1 // a flag to indicate that the ITC18 has been turned on
+    }
+    block search_block {
+        // three most important variables in mworks.
+        ignore = 0
+        success = 0
+        failure = 0
+        abort = 0
+        choice_index = 0
+
+        trial 'Trial N' (nsamples=10000){ 
+            // this is where you initialize variables.
+            reset_selection(background_index)    
+            task 'Trial N task' {
+                state 'Initialize' {
+                    // use to set variables per each trial, to keep track of things, etc...
+                    choice_locations = [] // preallocated set of locations the animal may look.
+                    choice_index = 0
+                    fixation_pos_x = 0
+                    fixation_pos_y = 0
+                    fp_visible = 0
+                    trial_bounds = [-1,-1] //set bounds to -1,-1 at the start before updating at the start of each trial
+                    trial_bounds[0] = now() // allocate the first entry of the list with the current experimental time. 
+
+                    // set the locations for the target 
+                    reset_selection (location_index)
+                    target_angle = location_index
+                    accept_selections(location_index)
+                    next_selection(location_index)
+                    
+                    // set category for the target
+                    reset_selection (image_category_index)
+                    oddity_category_index = image_category_index //set the first category to be used as the oddity
+                    accept_selections (image_category_index)
+                    next_selection (image_category_index) //set the second category to be the distractor
+                    distractor_category_index = image_category_index
+
+                    oddity_index = disc_rand(0,stim_samples_per_cat-1) + oddity_category_index*stim_samples_per_cat
+                    //27 images per im folder, 
+                    
+                    // step 1, select three indices for distractors 1, 2, 3
+                    reset_selection (distractor_exemplar_indices)
+                    distractor_index1 = distractor_exemplar_indices + distractor_category_index*stim_samples_per_cat
+                    accept_selections(distractor_exemplar_indices)
+                    next_selection(distractor_exemplar_indices)
+
+                    // now that the list is incremented, assign the second distractor image
+                    distractor_index2 = distractor_exemplar_indices + distractor_category_index*stim_samples_per_cat
+                    accept_selections(distractor_exemplar_indices)
+                    next_selection(distractor_exemplar_indices)
+
+                    distractor_index3 = distractor_exemplar_indices + distractor_category_index*stim_samples_per_cat
+                    accept_selections(distractor_exemplar_indices)
+                    next_selection(distractor_exemplar_indices)
+
+                    load_stimulus(image_categories[oddity_index])
+                    load_stimulus(image_categories[distractor_index1])
+                    load_stimulus(image_categories[distractor_index2])
+                    load_stimulus(image_categories[distractor_index3])
+                    
+                    report ('starting a new trial')
+                    goto (
+                        target='initial_fixation'
+                    )
+                    }
+                state 'initial_fixation' {
+                    report ('initial_fixation state')
+                    // check to make sure the animal's eye is in the right ballpark before you even start a trial.
+                    queue_stimulus('screen_region')
+                    update_stimulus_display()
+
+                    start_timer (
+                        timer = screen_acquisition_timer
+                        duration = time2acqscreen
+                        duration_units = ms
+                        )
+
+                    // go to the fixation on state as soon as the eye is in the right ballpark    
+                    goto (
+                        target = 'fixation_on'
+                        when = in_target_region
+                        )
+
+                    // if the animal doesn't look at the center of the screen in 1 second, end the trial. 
+                    goto (
+                        target = 'End state'
+                        when = timer_expired(screen_acquisition_timer)
+                    )
+
+                }
+                state 'fixation_on' {
+
+                    report ('fixation on state')
+                    // the goal here to put a fixation point on the screen
+                    fp_visible = 1
+                    dequeue_stimulus('screen_region') //clear the fake screen window
+                    queue_stimulus('target_window')
+                    update_stimulus_display()
+                    
+
+
+
+                    // if the animal takes too long to look in the right window area, abort the trial and give the animal feedback
+                    start_timer (
+                        timer = fixation_acquisition_timer
+                        duration = time2acqfixation
+                        duration_units = ms
+                        )
+                    
+                    
+                    // fake_monkey_saccade_and_fixate (
+                    //     h = 0
+                    //     v = 0
+                    //     duration = 1s
+                    //     fake_monkey = fake_monkey
+                    // )
+                    
+                    // if the animal looks at the fixation point advance to the next state
+                    goto (
+                        target = 'search_grid_on'
+                        when = eye_in_target && timer_expired(fixation_acquisition_timer)
+                    )
+
+                    goto (
+                        target = 'fixation_feedback'
+                        when = timer_expired(fixation_acquisition_timer)
+                    )
+
+                }
+
+                state 'search_grid_on' {
+                    
+                    report ('search grid on state')
+                    // get the oddity location, and queue it                   
+                    stim_position_x = eccentricity*cos(target_angle/180 * pi())                    
+                    stim_position_y = eccentricity*sin(target_angle/180 * pi())                   
+                    fixation_pos_x = stim_position_x
+                    fixation_pos_y = stim_position_y
+                    fp_visible = 0
+                    queue_stimulus('target_window')
+
+                    queue_stimulus(natural_bg[background_index])
+                    
+                    queue_stimulus('upper_right_window')
+                    queue_stimulus('upper_left_window')
+                    queue_stimulus('lower_right_window')
+                    queue_stimulus('lower_left_window')
+
+                    stim_contrast = contrast_oddity
+                    queue_stimulus(image_categories[oddity_index])
+                    
+                    // add distractor 1
+                    stim_position_x = eccentricity*(cos(location_index/180 * pi()))
+                    stim_position_y = eccentricity*(sin(location_index/180 * pi()))
+                    stim_contrast = contrast_distractor
+                    queue_stimulus(image_categories[distractor_index1])
+                    accept_selections(location_index)
+                    next_selection(location_index)
+
+                    // add distractor 2
+                    stim_position_x = eccentricity*(cos(location_index/180 * pi()))
+                    stim_position_y = eccentricity*(sin(location_index/180 * pi()))
+                    stim_contrast = contrast_distractor
+                    queue_stimulus(image_categories[distractor_index2])
+                    accept_selections(location_index)
+                    next_selection(location_index)
+                    
+                    // add distractor 3
+                    stim_position_x = eccentricity*(cos(location_index/180 * pi()))
+                    stim_position_y = eccentricity*(sin(location_index/180 * pi()))
+                    stim_contrast = contrast_distractor
+                    queue_stimulus(image_categories[distractor_index3])
+                    accept_selections(location_index)
+                    next_selection(location_index)
+                    
+                    // flip the screen
+                    update_stimulus_display()
+                    // fake_monkey_fixate (
+                    //     duration = 0.5s
+                    //     fake_monkey = fake_monkey
+                    // )
+                    
+
+                    start_timer (
+                        timer = search_timer
+                        duration = time4decision
+                        duration_units = ms
+                        )
+
+                    //monkey executes a saccade to a random location
+                    reset_selection(location_index)
+
+                    // fake_monkey_saccade_to_location (
+                    //     h = eccentricity*cos(location_index/180 * pi())
+                    //     v = eccentricity*sin(location_index/180 * pi())
+                    //     fake_monkey = fake_monkey
+                    // )
+                    // Option 1
+                     goto (
+                        // monkey at some point looks off the screen
+                        target = 'Abort'
+                        when = !in_target_region
+                    )
+                    //Option 2
+                    goto (
+                        // monkey spends its time, looking at all targets but the correct one
+                        target = 'Failure'
+                        when = timer_expired(search_timer)
+                    )
+
+                    //Option 3
+                    goto (
+                        // the monkey is looking at an object, just not the correct one
+                        target = 'Searching'
+                        when  = saccade==0 && (eye_in_choice1 || eye_in_choice2 || eye_in_choice3 || eye_in_choice4)
+                    )
+
+              
+
+                }   
+
+                state 'Searching' {
+                    // monkey is lookin' around.
+                    report('Searching')
+                    
+                    // fake_monkey_fixate (
+                    //     duration = 400ms
+                    //     fake_monkey = fake_monkey
+                    // )
+                    start_timer (
+                        timer = plausible_fixation_time
+                        duration = 200
+                        duration_units = ms
+                        )
+
+                    goto (
+                        //this is where the monkey just happens to be staring
+                        //only at the center of the screen
+                        target = 'Failure'
+                        when = timer_expired(search_timer) && !eye_in_target
+                    )
+
+
+                    goto (
+                        // monkey at some point looks off the screen
+                        target = 'Abort'
+                        when = !in_target_region
+                    )
+                    
+                    goto (
+                        // the animal's eye is stable, and 200 ms have passed. 
+                        target = 'Log choice'
+                        when = timer_expired(plausible_fixation_time) && saccade==0
+                    )
+
+                }
+                state 'Log choice' {
+                    report('logging choice')
+                  
+
+                    start_timer (
+                        timer = hold_target_acquisition
+                        duration = time2hold-200
+                        duration_units = ms
+                    )
+                    if_else {
+                        if (eye_in_choice1 ) {
+                            tmp_position = 45
+                            choice_locations[choice_index] = 45
+                            choice_index = choice_index + 1
+                        }
+
+                        if (eye_in_choice2 ) {
+                            tmp_position = 315
+                            choice_locations[choice_index] = 315
+                            choice_index = choice_index + 1
+                        }
+
+                        if (eye_in_choice3 ) {
+                            tmp_position = 225
+                            choice_locations[choice_index] = 225
+                            choice_index = choice_index + 1
+                        }
+
+                        if (eye_in_choice4 ) {
+                            tmp_position = 135
+                            choice_locations[choice_index] = 135
+                            choice_index = choice_index + 1
+                        }
+
+                        else () {
+                            choice_locations[choice_index] = -1
+                            choice_index = choice_index+1
+                        }
+
+                    }
+                    //if (choice_index > 0) {
+                    //    if (tmp_position == choice_locations[choice_index-1]) {
+                    //        choice_index = choice_index-1
+                    //        
+                    //    }
+                    //}
+                              
+                    goto (
+                        target = 'Correct choice'
+                        when = timer_expired(hold_target_acquisition) && eye_in_target && saccade==0
+                    )
+
+                    goto (
+                        target = 'Searching'
+                        when = !eye_in_target
+                    )
+
+                }
+
+                state 'Correct choice' {
+                    report('success')
+                    start_timer (
+                        timer = bookkeeping_time
+                        duration = 50
+                        duration_units = ms
+                        )
+                    success = success + 1
+                    reward = reward_duration
+                    choice_locations[choice_index] = target_angle
+                    // play a little positive feedback sound. 
+                    play_sound(correct_sound)
+                    goto (
+                        target = 'End state'
+                        when = timer_expired(bookkeeping_time)
+                    )
+                }
+
+                
+                state 'Abort' {
+                    abort = abort+1
+                    // play a feedback sound to let the monkey know to look at the screen (TODO)
+
+                    goto (
+                        target = 'End state'
+                    )
+
+                }
+
+                state 'Failure' {
+                    failure = failure+1
+                    // play a feedback sound to let the monkey know he messed up
+                    play_sound(error_sound)
+                    goto (
+                        target = 'End state'
+                    )
+                }
+                state 'fixation_feedback' {
+                    // the animal failed to look at the fixation point, so give him a cue as to where he is supposed to look.
+                    
+                    dequeue_stimulus('target_window')
+                    queue_stimulus('fixation_feedback_cue')
+                    update_stimulus_display()
+
+                    start_timer (
+                        timer = feedback_timer
+                        duration = feedback_duration
+                        duration_units = ms
+                        )
+
+                    goto (
+                        target = 'End state'
+                        when = timer_expired(feedback_timer)
+                    )
+
+                }
+                state 'End state' {
+                    // clearing memory
+                    dequeue_stimulus(natural_bg[background_index])
+                    dequeue_stimulus('target_window')
+                    dequeue_stimulus('upper_right_window')
+                    dequeue_stimulus('upper_left_window')
+                    dequeue_stimulus('lower_right_window')
+                    dequeue_stimulus('lower_left_window')
+                    dequeue_stimulus('fixation_feedback_cue')
+                    dequeue_stimulus(image_categories[oddity_index])
+                    dequeue_stimulus(image_categories[distractor_index1])
+                    dequeue_stimulus(image_categories[distractor_index2])
+                    dequeue_stimulus(image_categories[distractor_index3])
+                    unload_stimulus(image_categories[oddity_index])
+                    unload_stimulus(image_categories[distractor_index1])
+                    unload_stimulus(image_categories[distractor_index2])
+                    unload_stimulus(image_categories[distractor_index3])
+
+
+                    update_stimulus_display()
+                    // allocating what the end time of the trial is. 
+                    trial_count = trial_count + 1
+                    trial_bounds[1] = now() // allocate the first entry of the list with the current experimental time. 
+                    report ('completed a trial')
+
+                    //
+                    yield()
+                }
+            }
+        }
+    }
+}
